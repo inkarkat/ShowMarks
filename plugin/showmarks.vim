@@ -5,6 +5,12 @@
 "                Michael Geddes <michaelrgeddes@optushome.com.au>
 " Version:       2.2
 " Modified:      17 August 2004
+" 	/^-- 16-Jun-2008 BF: Added <C-U> to remove range for :execute in the
+" 					':noremap m'. 
+" 					Only defining mapping for normal and visual mode, not
+" 					select and operator-pending mode. 
+" 					ENH: Visual mode mapping does not leave visual mode. 
+" 					Replaced internal '\sm' mapping with ':normal! m'. 
 " License:       Released into the public domain.
 " ChangeLog:     See :help showmarks-changelog
 "
@@ -127,8 +133,8 @@ if !hasmapto( '<Plug>ShowmarksShowMarksOn'     ) | map <silent> <unique> <leader
 if !hasmapto( '<Plug>ShowmarksClearMark'       ) | map <silent> <unique> <leader>mh :ShowMarksClearMark<cr>| endif
 if !hasmapto( '<Plug>ShowmarksClearAll'        ) | map <silent> <unique> <leader>ma :ShowMarksClearAll<cr>|  endif
 if !hasmapto( '<Plug>ShowmarksPlaceMark'       ) | map <silent> <unique> <leader>mm :ShowMarksPlaceMark<cr>| endif
-noremap <unique> <script> \sm m
-noremap <silent> m :exe 'norm \sm'.nr2char(getchar())<bar>call <sid>ShowMarks()<CR>
+nnoremap <silent> m :<C-U>exe 'norm! m'.nr2char(getchar())<bar>call <sid>ShowMarks()<CR>
+xnoremap <silent> m :<C-U>exe 'norm! m'.nr2char(getchar())<bar>call <sid>ShowMarks()<bar>normal gv<CR>
 
 " AutoCommands: Only if ShowMarks is enabled
 if g:showmarks_enable == 1
