@@ -5,6 +5,7 @@
 "                Michael Geddes <michaelrgeddes@optushome.com.au>
 " Version:       2.2
 " Modified:      17 August 2004
+" 	/^-- 01-Jul-2008 Removed error message if ! has( "signs" ). 
 " 	/^-- 16-Jun-2008 BF: Added <C-U> to remove range for :execute in the
 " 					':noremap m'. 
 " 					Only defining mapping for normal and visual mode, not
@@ -91,18 +92,10 @@
 " ==============================================================================
 
 " Check if we should continue loading
-if exists( "loaded_showmarks" )
+if exists( "loaded_showmarks" ) || ! has( "signs" )
 	finish
 endif
 let loaded_showmarks = 1
-
-" Bail if Vim isn't compiled with signs support.
-if has( "signs" ) == 0
-	echohl ErrorMsg
-	echo "ShowMarks requires Vim to have +signs support."
-	echohl None
-	finish
-endif
 
 " Options: Set up some nice defaults
 if !exists('g:showmarks_enable'      ) | let g:showmarks_enable       = 1    | endif
@@ -134,7 +127,9 @@ if !hasmapto( '<Plug>ShowmarksClearMark'       ) | map <silent> <unique> <leader
 if !hasmapto( '<Plug>ShowmarksClearAll'        ) | map <silent> <unique> <leader>ma :ShowMarksClearAll<cr>|  endif
 if !hasmapto( '<Plug>ShowmarksPlaceMark'       ) | map <silent> <unique> <leader>mm :ShowMarksPlaceMark<cr>| endif
 nnoremap <silent> m :<C-U>exe 'norm! m'.nr2char(getchar())<bar>call <sid>ShowMarks()<CR>
+if v:version >= 700
 xnoremap <silent> m :<C-U>exe 'norm! m'.nr2char(getchar())<bar>call <sid>ShowMarks()<bar>normal gv<CR>
+endif
 
 " AutoCommands: Only if ShowMarks is enabled
 if g:showmarks_enable == 1
