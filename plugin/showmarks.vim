@@ -5,6 +5,13 @@
 "                Michael Geddes <michaelrgeddes@optushome.com.au>
 " Version:       2.2
 " Modified:      17 August 2004
+" 	/^-- 10-Jan-2009 BF: Off-by-one error: Marks weren't cleared if one set a
+"					mark in line 1. 
+"					BF: Sign places may change due to commands like 'o' and 'J',
+"					then the ':sign place' output and b:placed_nm differ.
+"					Removed checks for their equality and added additonal
+"					removal to eliminate wrong sign marks. 
+"					Added -bar argument to commands. 
 " 	/^-- 01-Jul-2008 Removed error message if ! has( "signs" ). 
 " 	/^-- 16-Jun-2008 BF: Added <C-U> to remove range for :execute in the
 " 					':noremap m'. 
@@ -114,11 +121,11 @@ if !exists('g:showmarks_hlline_other') | let g:showmarks_hlline_other = "0"  | e
 let s:all_marks = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.'`^<>[]{}()\""
 
 " Commands
-com! -nargs=0 ShowMarksToggle    :call <sid>ShowMarksToggle()
-com! -nargs=0 ShowMarksOn        :call <sid>ShowMarksOn()
-com! -nargs=0 ShowMarksClearMark :call <sid>ShowMarksClearMark()
-com! -nargs=0 ShowMarksClearAll  :call <sid>ShowMarksClearAll()
-com! -nargs=0 ShowMarksPlaceMark :call <sid>ShowMarksPlaceMark()
+com! -bar -nargs=0 ShowMarksToggle    :call <sid>ShowMarksToggle()
+com! -bar -nargs=0 ShowMarksOn        :call <sid>ShowMarksOn()
+com! -bar -nargs=0 ShowMarksClearMark :call <sid>ShowMarksClearMark()
+com! -bar -nargs=0 ShowMarksClearAll  :call <sid>ShowMarksClearAll()
+com! -bar -nargs=0 ShowMarksPlaceMark :call <sid>ShowMarksPlaceMark()
 
 " Mappings (NOTE: Leave the '|'s immediately following the '<cr>' so the mapping does not contain any trailing spaces!)
 if !hasmapto( '<Plug>ShowmarksShowMarksToggle' ) | map <silent> <unique> <leader>mt :ShowMarksToggle<cr>|    endif
@@ -357,7 +364,7 @@ fun! s:ShowMarks()
 		let id = n + (s:maxmarks * winbufnr(0))
 		let ln = line("'".c)
 
-		if ln == 0 && (exists('b:placed_'.nm) && b:placed_{nm} != ln)
+		if ln <= 1 && (exists('b:placed_'.nm) && b:placed_{nm} != ln)
 			exe 'sign unplace '.id.' buffer='.winbufnr(0)
 		elseif ln > 1 || c !~ '[a-zA-Z]'
 			" Have we already placed a mark here in this call to ShowMarks?
@@ -367,17 +374,19 @@ fun! s:ShowMarks()
 					let b:ShowMarksLink{mark_at{ln}} = 'ShowMarksHLm'
 					exe 'hi link '.s:ShowMarksDLink{mark_at{ln}}.mark_at{ln}.' '.b:ShowMarksLink{mark_at{ln}}
 				endif
+				if exists('b:placed_'.nm)
+					exe 'sign unplace '.id.' buffer='.winbufnr(0)
+					unlet b:placed_{nm}
+				endif
 			else
 				if !exists('b:ShowMarksLink'.nm) || b:ShowMarksLink{nm} != s:ShowMarksDLink{nm}
 					let b:ShowMarksLink{nm} = s:ShowMarksDLink{nm}
 					exe 'hi link '.s:ShowMarksDLink{nm}.nm.' '.b:ShowMarksLink{nm}
 				endif
 				let mark_at{ln} = nm
-				if !exists('b:placed_'.nm) || b:placed_{nm} != ln
-					exe 'sign unplace '.id.' buffer='.winbufnr(0)
-					exe 'sign place '.id.' name=ShowMark'.nm.' line='.ln.' buffer='.winbufnr(0)
-					let b:placed_{nm} = ln
-				endif
+				exe 'sign unplace '.id.' buffer='.winbufnr(0)
+				exe 'sign place '.id.' name=ShowMark'.nm.' line='.ln.' buffer='.winbufnr(0)
+				let b:placed_{nm} = ln
 			endif
 		endif
 		let n = n + 1
