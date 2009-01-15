@@ -12,6 +12,9 @@
 "					Removed checks for their equality and added additonal
 "					removal to eliminate wrong sign marks. 
 "					Added -bar argument to commands. 
+"					Marks are not :delmark'ed, not moved to (invisible) line 1. 
+"					Changed default keymappings: \mh now turns off marks, 
+"					added \mu for update. 
 " 	/^-- 01-Jul-2008 Removed error message if ! has( "signs" ). 
 " 	/^-- 16-Jun-2008 BF: Added <C-U> to remove range for :execute in the
 " 					':noremap m'. 
@@ -28,8 +31,10 @@
 "                Default keymappings are:
 "                  <Leader>mt  - Toggles ShowMarks on and off.
 "                  <Leader>mo  - Turns ShowMarks on, and displays marks.
-"                  <Leader>mh  - Clears a mark.
-"                  <Leader>ma  - Clears all marks.
+"                  <Leader>mh  - Turns ShowMarks off, and hides marks.
+"                  <Leader>mu  - Updates marks display. 
+"                  <Leader>mr  - Removes a mark.
+"                  <Leader>md  - Deletes all marks.
 "                  <Leader>mm  - Places the next available mark.
 "
 "                Hiding a mark doesn't actually remove it, it simply moves it
@@ -123,6 +128,8 @@ let s:all_marks = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345678
 " Commands
 com! -bar -nargs=0 ShowMarksToggle    :call <sid>ShowMarksToggle()
 com! -bar -nargs=0 ShowMarksOn        :call <sid>ShowMarksOn()
+com! -bar -nargs=0 ShowMarksOff       :call <sid>ShowMarksOn()|call <sid>ShowMarksToggle()
+com! -bar -nargs=0 ShowMarksUpdate    :call <sid>ShowMarksToggle()|call <sid>ShowMarksOn()
 com! -bar -nargs=0 ShowMarksClearMark :call <sid>ShowMarksClearMark()
 com! -bar -nargs=0 ShowMarksClearAll  :call <sid>ShowMarksClearAll()
 com! -bar -nargs=0 ShowMarksPlaceMark :call <sid>ShowMarksPlaceMark()
@@ -130,8 +137,10 @@ com! -bar -nargs=0 ShowMarksPlaceMark :call <sid>ShowMarksPlaceMark()
 " Mappings (NOTE: Leave the '|'s immediately following the '<cr>' so the mapping does not contain any trailing spaces!)
 if !hasmapto( '<Plug>ShowmarksShowMarksToggle' ) | map <silent> <unique> <leader>mt :ShowMarksToggle<cr>|    endif
 if !hasmapto( '<Plug>ShowmarksShowMarksOn'     ) | map <silent> <unique> <leader>mo :ShowMarksOn<cr>|        endif
-if !hasmapto( '<Plug>ShowmarksClearMark'       ) | map <silent> <unique> <leader>mh :ShowMarksClearMark<cr>| endif
-if !hasmapto( '<Plug>ShowmarksClearAll'        ) | map <silent> <unique> <leader>ma :ShowMarksClearAll<cr>|  endif
+if !hasmapto( '<Plug>ShowmarksShowMarksOff'    ) | map <silent> <unique> <leader>mh :ShowMarksOff<cr>|       endif
+if !hasmapto( '<Plug>ShowmarksShowMarksUpdate' ) | map <silent> <unique> <leader>mu :ShowMarksUpdate<cr>|    endif
+if !hasmapto( '<Plug>ShowmarksClearMark'       ) | map <silent> <unique> <leader>mr :ShowMarksClearMark<cr>| endif
+if !hasmapto( '<Plug>ShowmarksClearAll'        ) | map <silent> <unique> <leader>md :ShowMarksClearAll<cr>|  endif
 if !hasmapto( '<Plug>ShowmarksPlaceMark'       ) | map <silent> <unique> <leader>mm :ShowMarksPlaceMark<cr>| endif
 nnoremap <silent> m :<C-U>exe 'norm! m'.nr2char(getchar())<bar>call <sid>ShowMarks()<CR>
 if v:version >= 700
@@ -364,9 +373,9 @@ fun! s:ShowMarks()
 		let id = n + (s:maxmarks * winbufnr(0))
 		let ln = line("'".c)
 
-		if ln <= 1 && (exists('b:placed_'.nm) && b:placed_{nm} != ln)
+		if ln == 0 && exists('b:placed_'.nm)
 			exe 'sign unplace '.id.' buffer='.winbufnr(0)
-		elseif ln > 1 || c !~ '[a-zA-Z]'
+		elseif ln > 0 || c !~ '[a-zA-Z]'
 			" Have we already placed a mark here in this call to ShowMarks?
 			if exists('mark_at'.ln)
 				" Already placed a mark, set the highlight to multiple
@@ -376,7 +385,7 @@ fun! s:ShowMarks()
 				endif
 				if exists('b:placed_'.nm)
 					exe 'sign unplace '.id.' buffer='.winbufnr(0)
-					unlet b:placed_{nm}
+					unlet! b:placed_{nm}
 				endif
 			else
 				if !exists('b:ShowMarksLink'.nm) || b:ShowMarksLink{nm} != s:ShowMarksDLink{nm}
@@ -394,8 +403,7 @@ fun! s:ShowMarks()
 endf
 
 " Function: ShowMarksClearMark()
-" Description: This function hides the mark at the current line.
-" It simply moves the mark to line 1 and removes the sign.
+" Description: This function deletes the mark(s) at the current line.
 " Only marks a-z and A-Z are supported.
 fun! s:ShowMarksClearMark()
 	let ln = line(".")
@@ -407,8 +415,8 @@ fun! s:ShowMarksClearMark()
 			let nm = s:NameOfMark(c)
 			let id = n + (s:maxmarks * winbufnr(0))
 			exe 'sign unplace '.id.' buffer='.winbufnr(0)
-			exe '1 mark '.c
-			let b:placed_{nm} = 1
+			unlet! b:placed_{nm}
+			exe 'delmark '.c
 		endif
 		let n = n + 1
 	endw
@@ -416,7 +424,6 @@ endf
 
 " Function: ShowMarksClearAll()
 " Description: This function clears all marks in the buffer.
-" It simply moves the marks to line 1 and removes the signs.
 " Only marks a-z and A-Z are supported.
 fun! s:ShowMarksClearAll()
 	let n = 0
@@ -427,8 +434,8 @@ fun! s:ShowMarksClearAll()
 			let nm = s:NameOfMark(c)
 			let id = n + (s:maxmarks * winbufnr(0))
 			exe 'sign unplace '.id.' buffer='.winbufnr(0)
-			exe '1 mark '.c
-			let b:placed_{nm} = 1
+			unlet! b:placed_{nm}
+			exe 'delmark '.c
 		endif
 		let n = n + 1
 	endw
@@ -446,7 +453,7 @@ fun! s:ShowMarksHideAll()
 		if exists('b:placed_'.nm)
 			let id = n + (s:maxmarks * winbufnr(0))
 			exe 'sign unplace '.id.' buffer='.winbufnr(0)
-			unlet b:placed_{nm}
+			unlet! b:placed_{nm}
 		endif
 		let n = n + 1
 	endw
@@ -476,7 +483,7 @@ fun! s:ShowMarksPlaceMark()
 	while n < s:maxmarks
 		let c = strpart(s:IncludeMarks(), n, 1)
 		if c =~# '[a-z]'
-			if line("'".c) <= 1
+			if line("'".c) == 0
 				" Found an unused [a-z] mark; we're done.
 				let next_mark = n
 				break
