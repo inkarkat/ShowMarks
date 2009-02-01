@@ -225,7 +225,8 @@ endf
 fun! s:VerifyText(which)
 	if strlen(g:showmarks_text{a:which}) == 0 || strlen(g:showmarks_text{a:which}) > 2
 		echohl ErrorMsg
-		echo "ShowMarks: text".a:which." must contain only 1 or 2 characters."
+		let v:errmsg = "ShowMarks: text".a:which." must contain only 1 or 2 characters."
+		echomsg v:errmsg
 		echohl None
 		let g:showmarks_text{a:which}=">"
 	endif
