@@ -5,6 +5,8 @@
 "                Michael Geddes <michaelrgeddes@optushome.com.au>
 " Version:       2.2
 " Modified:      17 August 2004
+" 	/^-- 02-Feb-2009 ENH: Now using b:changedtick to suppress update of marks
+"					(from the CursorHold autocmd) if the buffer is unchanged. 
 " 	/^-- 10-Jan-2009 BF: Off-by-one error: Marks weren't cleared if one set a
 "					mark in line 1. 
 "					BF: Sign places may change due to commands like 'o' and 'J',
@@ -151,7 +153,7 @@ endif
 if g:showmarks_enable == 1
 	aug ShowMarks
 		au!
-		autocmd CursorHold * call s:ShowMarks()
+		autocmd CursorHold * call s:ShowMarks(1)
 	aug END
 endif
 
@@ -333,7 +335,7 @@ fun! s:ShowMarksToggle()
 		call <sid>ShowMarks()
 		aug ShowMarks
 			au!
-			autocmd CursorHold * call s:ShowMarks()
+			autocmd CursorHold * call s:ShowMarks(1)
 		aug END
 	else
 		let g:showmarks_enable = 0
@@ -353,10 +355,18 @@ endf
 " first mark on any particular line -- this forces only the first mark
 " (according to the order of showmarks_include) to be shown (i.e., letters
 " take precedence over marks like paragraph and sentence.)
-fun! s:ShowMarks()
+fun! s:ShowMarks(...)
 	if g:showmarks_enable == 0
 		return
 	endif
+	if a:0
+		" We've been called from the autocmd. Return immediately unless there
+		" have been changes in the buffer. 
+		if exists('b:showmarks_changedtick') && b:showmarks_changedtick == b:changedtick
+			return
+		endif
+	endif
+	let b:showmarks_changedtick = b:changedtick
 
 	if   ((match(g:showmarks_ignore_type, "[Hh]") > -1) && (&buftype    == "help"    ))
 	\ || ((match(g:showmarks_ignore_type, "[Qq]") > -1) && (&buftype    == "quickfix"))
