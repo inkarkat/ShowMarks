@@ -520,7 +520,8 @@ fun! s:ShowMarksPlaceMark()
 
 	if (next_mark == -1)
 		echohl WarningMsg
-		echo 'No marks in [a-z] included! (No "next mark" to choose from)'
+		let v:warningmsg = 'No marks in [a-z] included! (No "next mark" to choose from)'
+		echomsg v:warningmsg
 		echohl None
 		return
 	endif
