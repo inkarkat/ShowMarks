@@ -3,27 +3,8 @@
 " Description:   Visually displays the location of marks.
 " Authors:       Anthony Kruize <trandor@labyrinth.net.au>
 "                Michael Geddes <michaelrgeddes@optushome.com.au>
-" Version:       2.2
-" Modified:      17 August 2004
-" 	/^-- 02-Feb-2009 ENH: Now using b:changedtick to suppress update of marks
-"					(from the CursorHold autocmd) if the buffer is unchanged. 
-" 	/^-- 10-Jan-2009 BF: Off-by-one error: Marks weren't cleared if one set a
-"					mark in line 1. 
-"					BF: Sign places may change due to commands like 'o' and 'J',
-"					then the ':sign place' output and b:placed_nm differ.
-"					Removed checks for their equality and added additonal
-"					removal to eliminate wrong sign marks. 
-"					Added -bar argument to commands. 
-"					Marks are not :delmark'ed, not moved to (invisible) line 1. 
-"					Changed default keymappings: \mh now turns off marks, 
-"					added \mu for update. 
-" 	/^-- 01-Jul-2008 Removed error message if ! has( "signs" ). 
-" 	/^-- 16-Jun-2008 BF: Added <C-U> to remove range for :execute in the
-" 					':noremap m'. 
-" 					Only defining mapping for normal and visual mode, not
-" 					select and operator-pending mode. 
-" 					ENH: Visual mode mapping does not leave visual mode. 
-" 					Replaced internal '\sm' mapping with ':normal! m'. 
+" Version:       2.5
+" Modified:      02 February 2009
 " License:       Released into the public domain.
 " ChangeLog:     See :help showmarks-changelog
 "
@@ -35,12 +16,9 @@
 "                  <Leader>mo  - Turns ShowMarks on, and displays marks.
 "                  <Leader>mh  - Turns ShowMarks off, and hides marks.
 "                  <Leader>mu  - Updates marks display. 
-"                  <Leader>mr  - Removes a mark.
+"                  <Leader>mr  - Removes any marks from the current line.
 "                  <Leader>md  - Deletes all marks.
-"                  <Leader>mm  - Places the next available mark.
-"
-"                Hiding a mark doesn't actually remove it, it simply moves it
-"                to line 1 and hides it visually.
+"                  <Leader>mm  - Places the next available mark on the current line.
 "
 " Configuration: ***********************************************************
 "                * PLEASE read the included help file(showmarks.txt) for a *
@@ -427,7 +405,7 @@ fun! s:ShowMarksClearMark()
 			let id = n + (s:maxmarks * winbufnr(0))
 			exe 'sign unplace '.id.' buffer='.winbufnr(0)
 			unlet! b:placed_{nm}
-			exe 'delmark '.c
+			exe 'delmarks '.c
 		endif
 		let n = n + 1
 	endw
@@ -446,7 +424,7 @@ fun! s:ShowMarksClearAll()
 			let id = n + (s:maxmarks * winbufnr(0))
 			exe 'sign unplace '.id.' buffer='.winbufnr(0)
 			unlet! b:placed_{nm}
-			exe 'delmark '.c
+			exe 'delmarks '.c
 		endif
 		let n = n + 1
 	endw
