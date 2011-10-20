@@ -3,7 +3,7 @@
 " Description:   Visually displays the location of marks.
 " Authors:       Anthony Kruize <trandor@labyrinth.net.au>
 "                Michael Geddes <michaelrgeddes@optushome.com.au>
-" Version:       2.5
+" Version:       2.6
 " Modified:      02 February 2009
 " License:       Released into the public domain.
 " ChangeLog:     See :help showmarks-changelog
@@ -84,7 +84,7 @@
 " ==============================================================================
 
 " Check if we should continue loading
-if exists( "loaded_showmarks" ) || ! has( "signs" )
+if exists( "loaded_showmarks" ) || ! has( "signs" ) || v:version < 700
 	finish
 endif
 let loaded_showmarks = 1
@@ -123,9 +123,7 @@ if !hasmapto( '<Plug>ShowmarksClearMark'       ) | map <silent> <unique> <leader
 if !hasmapto( '<Plug>ShowmarksClearAll'        ) | map <silent> <unique> <leader>md :ShowMarksClearAll<cr>|  endif
 if !hasmapto( '<Plug>ShowmarksPlaceMark'       ) | map <silent> <unique> <leader>mm :ShowMarksPlaceMark<cr>| endif
 nnoremap <silent> m :<C-U>exe 'norm! m'.nr2char(getchar())<bar>call <sid>ShowMarks()<CR>
-if v:version >= 700
 xnoremap <silent> m :<C-U>exe 'norm! m'.nr2char(getchar())<bar>call <sid>ShowMarks()<bar>normal gv<CR>
-endif
 
 " AutoCommands: Only if ShowMarks is enabled
 if g:showmarks_enable == 1
@@ -140,6 +138,21 @@ hi default ShowMarksHLl ctermfg=darkblue ctermbg=blue cterm=bold guifg=blue guib
 hi default ShowMarksHLu ctermfg=darkblue ctermbg=blue cterm=bold guifg=blue guibg=lightblue gui=bold
 hi default ShowMarksHLo ctermfg=darkblue ctermbg=blue cterm=bold guifg=blue guibg=lightblue gui=bold
 hi default ShowMarksHLm ctermfg=darkblue ctermbg=blue cterm=bold guifg=blue guibg=lightblue gui=bold
+
+" Function: GetMarkLine()
+" Authors: Easwy Yang
+" Description: This function will return the line number where the mark
+" placed. In VIM 7.0 and later, function line() always returns line number but
+" not 0 in case an uppercase mark or number mark is placed. However, in VIM 6,
+" it only returns 0 when the uppercase mark isn't placed in current file.
+fun! s:GetMarkLine(mark)
+	let pos = getpos(a:mark)
+	let lnum = pos[1]
+	if pos[0] && bufnr("%") != pos[0]
+		let lnum = 0
+	endif
+	return lnum
+endf
 
 " Function: IncludeMarks()
 " Description: This function returns the list of marks (in priority order) to
@@ -360,7 +373,7 @@ fun! s:ShowMarks(...)
 		let c = strpart(s:IncludeMarks(), n, 1)
 		let nm = s:NameOfMark(c)
 		let id = n + (s:maxmarks * winbufnr(0))
-		let ln = line("'".c)
+		let ln = s:GetMarkLine("'".c)
 
 		if ln == 0 && exists('b:placed_'.nm)
 			exe 'sign unplace '.id.' buffer='.winbufnr(0)
@@ -400,12 +413,12 @@ fun! s:ShowMarksClearMark()
 	let s:maxmarks = strlen(s:IncludeMarks())
 	while n < s:maxmarks
 		let c = strpart(s:IncludeMarks(), n, 1)
-		if c =~# '[a-zA-Z]' && ln == line("'".c)
+		if c =~# '[a-zA-Z]' && ln == s:GetMarkLine("'".c)
 			let nm = s:NameOfMark(c)
 			let id = n + (s:maxmarks * winbufnr(0))
 			exe 'sign unplace '.id.' buffer='.winbufnr(0)
 			unlet! b:placed_{nm}
-			exe 'delmarks '.c
+			exe 'delmarks' c
 		endif
 		let n = n + 1
 	endw
@@ -424,7 +437,7 @@ fun! s:ShowMarksClearAll()
 			let id = n + (s:maxmarks * winbufnr(0))
 			exe 'sign unplace '.id.' buffer='.winbufnr(0)
 			unlet! b:placed_{nm}
-			exe 'delmarks '.c
+			exe 'delmarks' c
 		endif
 		let n = n + 1
 	endw
@@ -472,7 +485,7 @@ fun! s:ShowMarksPlaceMark()
 	while n < s:maxmarks
 		let c = strpart(s:IncludeMarks(), n, 1)
 		if c =~# '[a-z]'
-			if line("'".c) == 0
+			if s:GetMarkLine("'".c) == 0
 				" Found an unused [a-z] mark; we're done.
 				let next_mark = n
 				break
