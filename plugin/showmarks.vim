@@ -15,7 +15,7 @@
 "                  <Leader>mt  - Toggles ShowMarks on and off.
 "                  <Leader>mo  - Turns ShowMarks on, and displays marks.
 "                  <Leader>mh  - Turns ShowMarks off, and hides marks.
-"                  <Leader>mu  - Updates marks display. 
+"                  <Leader>mu  - Updates marks display.
 "                  <Leader>mr  - Removes any marks from the current line.
 "                  <Leader>md  - Deletes all marks.
 "                  <Leader>mm  - Places the next available mark on the current line.
@@ -129,7 +129,7 @@ xnoremap <silent> m :<C-U>exe 'norm! m'.nr2char(getchar())<bar>call <sid>ShowMar
 if g:showmarks_enable == 1
 	aug ShowMarks
 		au!
-		autocmd CursorHold * call s:ShowMarks(1)
+		autocmd BufEnter,CursorHold * call s:ShowMarks(1)
 	aug END
 endif
 
@@ -326,7 +326,7 @@ fun! s:ShowMarksToggle()
 		call <sid>ShowMarks()
 		aug ShowMarks
 			au!
-			autocmd CursorHold * call s:ShowMarks(1)
+			autocmd BufEnter,CursorHold * call s:ShowMarks(1)
 		aug END
 	else
 		let g:showmarks_enable = 0
@@ -352,7 +352,7 @@ fun! s:ShowMarks(...)
 	endif
 	if a:0
 		" We've been called from the autocmd. Return immediately unless there
-		" have been changes in the buffer. 
+		" have been changes in the buffer.
 		if exists('b:showmarks_changedtick') && b:showmarks_changedtick == b:changedtick
 			return
 		endif
