@@ -115,13 +115,13 @@ com! -bar -nargs=0 ShowMarksClearAll  :call <sid>ShowMarksClearAll()
 com! -bar -nargs=0 ShowMarksPlaceMark :call <sid>ShowMarksPlaceMark()
 
 " Mappings (NOTE: Leave the '|'s immediately following the '<cr>' so the mapping does not contain any trailing spaces!)
-if !hasmapto( '<Plug>ShowmarksShowMarksToggle' ) | map <silent> <unique> <leader>mt :ShowMarksToggle<cr>|    endif
-if !hasmapto( '<Plug>ShowmarksShowMarksOn'     ) | map <silent> <unique> <leader>mo :ShowMarksOn<cr>|        endif
-if !hasmapto( '<Plug>ShowmarksShowMarksOff'    ) | map <silent> <unique> <leader>mh :ShowMarksOff<cr>|       endif
-if !hasmapto( '<Plug>ShowmarksShowMarksUpdate' ) | map <silent> <unique> <leader>mu :ShowMarksUpdate<cr>|    endif
-if !hasmapto( '<Plug>ShowmarksClearMark'       ) | map <silent> <unique> <leader>mr :ShowMarksClearMark<cr>| endif
-if !hasmapto( '<Plug>ShowmarksClearAll'        ) | map <silent> <unique> <leader>md :ShowMarksClearAll<cr>|  endif
-if !hasmapto( '<Plug>ShowmarksPlaceMark'       ) | map <silent> <unique> <leader>mm :ShowMarksPlaceMark<cr>| endif
+if !hasmapto( '<Plug>ShowmarksShowMarksToggle' ) | nmap <silent> <unique> <leader>mt :ShowMarksToggle<cr>| endif
+if !hasmapto( '<Plug>ShowmarksShowMarksOn'     ) | nmap <silent> <unique> <leader>mo :ShowMarksOn<cr>| endif
+if !hasmapto( '<Plug>ShowmarksShowMarksOff'    ) | nmap <silent> <unique> <leader>mh :ShowMarksOff<cr>| endif
+if !hasmapto( '<Plug>ShowmarksShowMarksUpdate' ) | nmap <silent> <unique> <leader>mu :ShowMarksUpdate<cr>| endif
+if !hasmapto( '<Plug>ShowmarksClearMark'       ) | nmap <silent> <unique> <leader>mr :ShowMarksClearMark<cr>| endif
+if !hasmapto( '<Plug>ShowmarksClearAll'        ) | nmap <silent> <unique> <leader>md :ShowMarksClearAll<cr>| endif
+if !hasmapto( '<Plug>ShowmarksPlaceMark'       ) | nmap <silent> <unique> <leader>mm :ShowMarksPlaceMark<cr>| endif
 nnoremap <silent> m :<C-U>exe 'norm! m'.nr2char(getchar())<bar>call <sid>ShowMarks()<CR>
 xnoremap <silent> m :<C-U>exe 'norm! m'.nr2char(getchar())<bar>call <sid>ShowMarks()<bar>normal gv<CR>
 
